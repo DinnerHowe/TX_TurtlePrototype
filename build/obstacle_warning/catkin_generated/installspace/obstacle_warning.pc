@@ -1,8 +1,0 @@
-prefix=/home/howe/turtlebot_demo/install
-
-Name: obstacle_warning
-Description: Description of obstacle_warning
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/howe/turtlebot_demo/install/lib 
-Requires: 

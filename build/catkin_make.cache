@@ -1,2 +1,0 @@
-amcl_odom:machine:marker:nav_staff:obstacle_warning:tasks
--DCATKIN_DEVEL_PREFIX=/home/howe/turtlebot_demo/devel -DCMAKE_INSTALL_PREFIX=/home/howe/turtlebot_demo/install -G Unix Makefiles
