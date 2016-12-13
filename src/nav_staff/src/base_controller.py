@@ -17,15 +17,18 @@ import CVlib
 import Queue
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import PointStamped
 
+Last_Action = None
 
 class ClearParams:
     def __init__(self):
         rospy.delete_param('~PlanTopic')
         rospy.delete_param('~OdomTopic')
         rospy.delete_param('~MotionTopice')
+        # rospy.delete_param('~GoalTopic')
         rospy.delete_param('~PathBias')
         rospy.delete_param('~MaxLinearSP')
         rospy.delete_param('~MinLinearSP')
@@ -41,7 +44,7 @@ class ClearParams:
 class BaseController:
     def __init__(self):
         self.define()
-        rospy.Subscriber(self.OdomTopic, Pose, self.OdomCB)
+        rospy.Subscriber(self.OdomTopic, PoseStamped, self.OdomCB)
         rospy.Subscriber(self.PlanTopic, Path, self.PlanCB)
         rospy.Timer(self.period, self.PubcmdCB)
         rospy.spin()
@@ -56,6 +59,10 @@ class BaseController:
         if not rospy.has_param('~OdomTopic'):
             rospy.set_param('~OdomTopic', '/robot_position_in_map')
         self.OdomTopic = rospy.get_param('~OdomTopic')
+
+        # if not rospy.has_param('~GoalTopic'):
+        #     rospy.set_param('~GoalTopic', '/clicked_point')
+        # self.GoalTopic = rospy.get_param('~GoalTopic')
 
         if not rospy.has_param('~MotionTopice'):
             rospy.set_param('~MotionTopice',
@@ -87,7 +94,7 @@ class BaseController:
         self.Predict = rospy.get_param('~PredictDistance')
 
         if not rospy.has_param('~PublishFrequency'):
-         rospy.set_param('~PublishFrequency', 0.01)
+         rospy.set_param('~PublishFrequency', 0.1)
         self.PublishFrequency = rospy.get_param('~PublishFrequency')
 
         if not rospy.has_param('~MinLinearSP'):
@@ -112,10 +119,30 @@ class BaseController:
         cmd = Twist()
         if self.path != []:
             if len(self.path) > self.num:
-                cmd = self.DiffControl(odom, self.path[self.num].pose, self.PathBias)
+                if round(self.path[self.num].pose.position.x - odom.pose.position.x, 2) >= 0.05 or round(self.path[self.num].pose.position.y - odom.pose.position.y, 2) >= 0.05:
+                    cmd = self.DiffControl(odom.pose, self.path[self.num].pose, self.PathBias)
+                else:
+                    count = 0
+                    for i in self.path[self.num:]:
+                        count += 1
+                        if round(i.pose.position.x - odom.pose.position.x, 2) >= 0.05 or round(i.pose.position.y - odom.pose.position.y, 2) >= 0.05:
+                            rospy.loginfo('obtain next motion position')
+                            break
+
+                    cmd = self.DiffControl(odom.pose, self.path[count].pose, self.PathBias)
+                    # resend = rospy.Publisher(self.GoalTopic, PointStamped, queue_size=1)
+                    # ResendGoal = PointStamped()
+                    # ResendGoal.point = self.path[-1].pose.position
+                    # ResendGoal.header.frame_id = 'map'
+                    # ResendGoal.header.stamp = rospy.Time.now()
+                    # resend.publish(ResendGoal)
             else:
                 try:
-                    cmd = self.GTP(odom, self.path[-1].pose)
+                    if round(self.path[-1].pose.position.x - odom.pose.position.x, 2) > 0.02 and round(self.path[-1].pose.position.y - odom.pose.position.y, 2) > 0.02:
+                        cmd = self.GTP(odom.pose, self.path[-1].pose)
+                    else:
+                        rospy.loginfo('robot in goal position 0')
+                        pass
                 except:
                     pass
 
@@ -202,6 +229,7 @@ class BaseController:
     def DiffControl(self, odom, goal, limit):
         cmd = Twist()
         CrossFire = False
+        global Last_Action
 
         (angular_drift, x_drift, y_drift) = self.AngularDrift(goal, odom)
 
@@ -292,33 +320,45 @@ class BaseController:
             if abs(cmdtwist) >= self.AngularBias:
                 rospy.loginfo('in position twist')
                 cmd.angular.z = cmdtwist  # self.MaxAngularSP
+                Last_Action = 'in position twist'
 
             elif self.AngularFree < abs(cmdtwist) < self.AngularBias:
                 rospy.loginfo('small circle')
                 cmd.angular.z = cmdtwist
                 cmd.linear.x = self.MinLinearSP
+                Last_Action = 'small circle'
 
             elif abs(cmdtwist) <= self.AngularFree:
                 if CrossFire:
                     rospy.loginfo('in position twist')
                     cmd.angular.z = cmdtwist
+                    Last_Action = 'in position twist'
+
                 else:
                     rospy.loginfo('forward')
-                    cmd.angular.z = cmdtwist
-                    boost = self.FrontClean(odom, self.path)
-                    if boost:
-                      cmd.linear.x = self.MaxLinearSP
+                    if Last_Action == 'in position twist':
+                        cmd.angular.z = cmdtwist
+                        cmd.linear.x = self.MinLinearSP
+                        Last_Action = 'forward'
+
                     else:
-                      cmd.linear.x = linear
-                    if cmd.linear.x == self.MaxLinearSP:
-                      print 'speed : ', cmd.linear.x
+                        cmd.angular.z = cmdtwist
+                        boost = self.FrontClean(odom, self.path)
+                        if boost and Last_Action == 'forward':
+                          cmd.linear.x = self.MaxLinearSP
+                        else:
+                          cmd.linear.x = linear
+                        if cmd.linear.x == self.MaxLinearSP:
+                          print 'max speed : ', cmd.linear.x
+                        Last_Action = 'forward'
             else:
-                pass
+                rospy.loginfo('unknow situation')
 
         else:
             #rospy.loginfo('robot in goal position')
             if self.AngularFree < abs(cmdtwist):
                 cmd.angular.z = cmdtwist
+                Last_Action = 'in position twist'
             else:
                 #rospy.loginfo('robot in goal orientation')
                 pass

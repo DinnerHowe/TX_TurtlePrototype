@@ -74,7 +74,7 @@
 
     <!-- Asus mount -->
     <joint name="mount_asus_xtion_pro_joint" type="fixed">
-      <origin xyz="-0.1024 0.0 0.272" rpy="0 0 0"/>
+      <origin xyz="0.1024 0.0 0.85" rpy="0 0 0"/>
       <parent link="${parent}"/>
       <child link="mount_asus_xtion_pro_link"/>
     </joint>  

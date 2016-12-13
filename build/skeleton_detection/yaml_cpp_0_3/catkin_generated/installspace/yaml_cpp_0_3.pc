@@ -1,0 +1,8 @@
+prefix=/home/howe/turtlebot_demo/install
+
+Name: yaml_cpp_0_3
+Description: Description of yaml_cpp_0_3
+Version: 0.3.1
+Cflags: -I/home/howe/turtlebot_demo/install/include
+Libs: -L/home/howe/turtlebot_demo/install/lib -lyaml-cpp-0.3
+Requires: 

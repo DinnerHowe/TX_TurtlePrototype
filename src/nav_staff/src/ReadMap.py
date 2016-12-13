@@ -22,6 +22,7 @@ from nav_msgs.msg import MapMetaData
 from nav_msgs.srv import *
 from geometry_msgs.msg import Quaternion
 
+ModifyElement = list()
 
 class ClearParams:
     def __init__(self):
@@ -41,7 +42,7 @@ class grid_map():
 
   rospy.Subscriber(self.root_topic+'/projection', PoseArray , self.MessPoses, queue_size=1)
   rospy.Timer(rospy.Duration(15), self.Reload)
-  rospy.Timer(rospy.Duration(0.5), self.Clear)
+  rospy.Timer(rospy.Duration(1), self.Clear)
   self.AMCLMapSever()
   rospy.spin()
  
@@ -56,19 +57,25 @@ class grid_map():
    return res
 
  def MessPoses(self, poses):
-  with self.locker: 
+  with self.locker:
    if len(poses.poses) > 0:
-    self.Map.data = copy.deepcopy(self.init_map.data)
+    #self.Map.data = copy.deepcopy(self.init_map.data)
     #print 'MessPoses'
     for pose in poses.poses:
-     num = maplib.position_num(self.Map, pose.position)
-     self.Map.data[num] = 100
+     num = maplib.position_num(self.init_map, pose.position)
+     self.Map.data[num] += 10
+     if self.Map.data[num] > 90:
+      self.Map.data[num] = 100
+     global ModifyElement
+     if num not in ModifyElement:
+      ModifyElement.append(num)
    self.map_pub.publish(self.Map)
-   rospy.loginfo('projection map loaded')
+   #rospy.loginfo('projection map loaded')
 
  def Reload(self, event):
   with self.locker:
-   self.Map.data = copy.deepcopy(self.init_map.data)
+   #self.Map.data = copy.deepcopy(self.init_map.data)
+   self.Map = self._map_(copy.deepcopy(self.Map))
    self.map_pub.publish(self.Map)
    rospy.loginfo ('update map')
    self.PubMetadata()
@@ -78,11 +85,24 @@ class grid_map():
    if self.start:
     self.map_pub.publish(self.init_map)
     self.start = False
-    print 'clear'
+    rospy.loginfo('init map sended')
    else:
+    self.Map = self._map_(copy.deepcopy(self.Map))
     self.map_pub.publish(self.Map)
+   #print 'ModifyElement', ModifyElement, len(self.Map.data)
    self.PubMetadata()
    #print maplib.get_effective_point(self.Map)[1]
+
+ def _map_(self, map):
+  global ModifyElement
+  for i in ModifyElement:
+   if map.data[i] > 0 and self.init_map.data[i] != 100:
+    map.data[i] -= 5
+    if map.data[i] < 0:
+     ModifyElement.remove(i)
+     map.data[i] = 0
+  return map
+
 
  def PubMetadata(self): 
   self.map_metadata.publish(self.Map.info)

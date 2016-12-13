@@ -1,0 +1,8 @@
+prefix=/home/howe/turtlebot_demo/devel
+
+Name: yaml_cpp_0_3
+Description: Description of yaml_cpp_0_3
+Version: 0.3.1
+Cflags: -I/home/howe/turtlebot_demo/src/skeleton_detection/yaml_cpp_0_3/yaml-cpp/include
+Libs: -L/home/howe/turtlebot_demo/devel/lib -lyaml-cpp-0.3
+Requires: 

@@ -1,7 +1,4 @@
 <launch> 
-
- <!--启动导航目标策略-->
- <include file="$(find amcl_odom)/launch/robot_position_in_map.launch" />
    
  <!--启动导航目标策略-->
  <include file="$(find tasks)/launch/go_tasks.launch" />
@@ -14,13 +11,8 @@
 
  <!--障碍物报警机制-->
  <include file="$(find obstacle_warning)/launch/ObstaclesWarning.launch" />
-
- <!--pob out image window-->
- <!--<include file="$(find camera_image)/launch/camera_image.launch" />-->
  
- <!--停止后语音-->
- <!--<include file="$(find simple_voice)/launch/warning_speaker.launch" />-->
- 
+ <!--<include file='$(find skeleton_detection)/launch/tracker.launch' />-->
  
 </launch>
 

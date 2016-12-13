@@ -1,0 +1,17 @@
+(cl:defpackage skeleton_detection-msg
+  (:use )
+  (:export
+   "<SKELETONCOMPLETE>"
+   "SKELETONCOMPLETE"
+   "<SKELETON_MESSAGE>"
+   "SKELETON_MESSAGE"
+   "<ROBOT_MESSAGE>"
+   "ROBOT_MESSAGE"
+   "<SKELETON_DETECTION_STATE>"
+   "SKELETON_DETECTION_STATE"
+   "<JOINT_MESSAGE>"
+   "JOINT_MESSAGE"
+   "<USER_IDS>"
+   "USER_IDS"
+  ))
+

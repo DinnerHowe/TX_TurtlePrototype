@@ -1,0 +1,8 @@
+prefix=/home/howe/turtlebot_demo/install
+
+Name: tasks
+Description: Description of tasks
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/howe/turtlebot_demo/install/lib 
+Requires: 
