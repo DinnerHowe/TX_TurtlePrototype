@@ -1,8 +1,0 @@
-prefix=/home/howe/turtlebot_demo/devel
-
-Name: skeleton_detection
-Description: Description of skeleton_detection
-Version: 0.1.0
-Cflags: -I/home/howe/turtlebot_demo/devel/include -I/home/howe/turtlebot_demo/src/skeleton_detection/skeleton_detection/include
-Libs: -L/home/howe/turtlebot_demo/devel/lib -lskeleton_detection
-Requires: cv_bridge geometry_msgs image_transport kdl_conversions openni2_camera pcl_conversions pcl_ros roscpp roslib tf message_runtime
