@@ -81,7 +81,7 @@ class Planner():
      self.MapTopic = rospy.get_param('~MapTopic')
 
      if not rospy.has_param('~PlanTopic'):
-         rospy.set_param('~PlanTopic', '/move_base/action_plan')
+         rospy.set_param('~PlanTopic', '/move_base/action_plan/jps')
      self.PlanTopic = rospy.get_param('~PlanTopic')
 
      if not rospy.has_param('~PublishFrequency'):
